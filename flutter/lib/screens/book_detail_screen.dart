@@ -2,11 +2,20 @@
 import 'package:flutter/material.dart'; // Flutter의 Material 디자인 패키지 임포트
 import '../models/book.dart'; // 도서 모델 임포트
 import 'book_loan_info_screen.dart'; // 도서 대출 정보 스크린 임포트
+import '../models/book_loan_info.dart';  // BookLoanInfo 모델
+import '../services/book_loan_service.dart';  // BookLoanService
 
-class BookDetailScreen extends StatelessWidget {
+class BookDetailScreen extends StatefulWidget {
   final Book book;
 
   const BookDetailScreen({super.key, required this.book});
+
+  @override
+  State<BookDetailScreen> createState() => _BookDetailScreenState();
+}
+
+class _BookDetailScreenState extends State<BookDetailScreen> {
+  final BookLoanService _loanService = BookLoanService();
 
   @override
   Widget build(BuildContext context) {
@@ -34,9 +43,9 @@ class BookDetailScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: book.imageUrl.isNotEmpty
+                child: widget.book.imageUrl.isNotEmpty
                     ? Image.network(
-                        book.imageUrl,
+                        widget.book.imageUrl,
                         fit: BoxFit.cover,
                         loadingBuilder: (context, child, loadingProgress) {
                           if (loadingProgress == null) return child;
@@ -59,14 +68,14 @@ class BookDetailScreen extends StatelessWidget {
               const SizedBox(height: 16),
               // 책 기본 정보
               Text(
-                book.title,
+                widget.book.title,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
               ),
               const SizedBox(height: 8),
               Text(
-                book.author,
+                widget.book.author,
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
               const SizedBox(height: 8),
@@ -75,7 +84,7 @@ class BookDetailScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    book.publisher,
+                    widget.book.publisher,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   Row(
@@ -83,7 +92,7 @@ class BookDetailScreen extends StatelessWidget {
                       const Icon(Icons.star, color: Colors.amber, size: 24),
                       const SizedBox(width: 4),
                       Text(
-                        book.rating.toString(),
+                        widget.book.rating.toString(),
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -150,7 +159,7 @@ class BookDetailScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => BookLoanInfoScreen(book: book),
+                          builder: (context) => BookLoanInfoScreen(book: widget.book),
                         ),
                       );
                     },
@@ -206,17 +215,35 @@ class BookDetailScreen extends StatelessWidget {
   }
 
   Widget _buildStatusCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            _buildStatusRow('도서상태', '대출가능'),
-            _buildStatusRow('청구기호', '813.7 한32ㅅ'),
-            _buildStatusRow('등록번호', '111111'),
-          ],
-        ),
-      ),
+    return FutureBuilder<List<BookLoanInfo>>(
+      future: _loanService.fetchBookLoanInfo(widget.book.id.toString()),  // widget. 추가
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(
+            child: Text('오류가 발생했습니다: ${snapshot.error}'),
+          );
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('소장 정보가 없습니다.'));
+        }
+
+        // 첫 번째 대출 정보를 사용
+        final loanInfo = snapshot.data!.first;
+
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                _buildStatusRow('도서상태', loanInfo.status),
+                _buildStatusRow('청구기호', loanInfo.callNo),
+                _buildStatusRow('등록번호', loanInfo.registrationNo),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
