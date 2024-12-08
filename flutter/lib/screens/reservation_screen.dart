@@ -1,11 +1,58 @@
-import 'package:flutter/material.dart';
-import 'package:qr_code_scanner/qr_code_scanner.dart'; // QR 코드 스캐너 패키지
+import 'package:flutter/material.dart'; // Flutter의 Material 디자인 패키지 임포트
 import 'reservation_process_page.dart'; // 예약 프로세스 페이지 임포트
 import 'reservation_history.dart'; // 이용 내역 페이지 임포트
+import 'dart:async'; // Timer를 사용하기 위해 추가
+import 'qr_scanner_screen.dart';
 
-class ReservationScreen extends StatelessWidget {
-  // 현재 이용 중인 장소와 좌석 번호를 저장하는 변수
-  final int? seatNumber; // 좌석 번호 (null이면 현재 이용 중인 좌석 없음)
+class ReservationScreen extends StatefulWidget {
+  final int? seatNumber;
+
+  ReservationScreen({required this.seatNumber});
+
+  @override
+  _ReservationScreenState createState() => _ReservationScreenState();
+}
+
+class _ReservationScreenState extends State<ReservationScreen> {
+  late Timer _timer; // Timer 변수 선언
+  String _remainingTime = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _updateRemainingTime(); // 초기 잔여 시간 계산
+    _timer = Timer.periodic(Duration(minutes: 1), (timer) {
+      _updateRemainingTime(); // 1분마다 잔여 시간 업데이트
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel(); // Timer 해제
+    super.dispose();
+  }
+
+  // 남은 시간 계산 안돼서 수정중
+  void _updateRemainingTime() {
+    DateTime now = DateTime.now(); // 현재 시간
+    DateTime endTime = DateTime.parse("2023-12-08 20:00"); // 동적 퇴실 시간 예시
+
+    // 현재 시간과 퇴실 시간 출력 (디버깅용)
+    print("현재 시간: ${now.toLocal()}"); // 로컬 시간으로 출력
+    print("퇴실 시간: ${endTime.toLocal()}"); // 로컬 시간으로 출력
+
+    Duration remainingTime = endTime.difference(now);
+
+    if (remainingTime.isNegative) {
+      _remainingTime = '퇴실 시간이 지났습니다.';
+    } else {
+      int hours = remainingTime.inHours;
+      int minutes = remainingTime.inMinutes % 60;
+      _remainingTime = '잔여 시간 $hours시간 $minutes분';
+    }
+
+    setState(() {}); // UI 업데이트
+  }
 
   // 예약 내역 예시 데이터
   final List<Map<String, String>> reservationHistory = [
@@ -24,8 +71,6 @@ class ReservationScreen extends StatelessWidget {
       "endTime": "16:00"
     }
   ]; // 예약 내역 예시 데이터
-
-  ReservationScreen({this.seatNumber});
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +92,7 @@ class ReservationScreen extends StatelessWidget {
                     border: Border.all(color: Colors.blue, width: 1),
                   ),
                   // 좌석 이용 중일 때와 아닐 때의 위젯을 구분하여 표시
-                  child: seatNumber != null
+                  child: widget.seatNumber != null
                       ? _buildSeatDetails(context) // 좌석 이용 중일 때 표시
                       : _buildNoSeatMessage(context), // 좌석 이용 중이 아닐 때 표시
                 ),
@@ -63,7 +108,6 @@ class ReservationScreen extends StatelessWidget {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        // 예약하기 버튼 클릭 시 예약 프로세스 페이지로 이동
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -72,8 +116,8 @@ class ReservationScreen extends StatelessWidget {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
-                        padding: const EdgeInsets.symmetric(vertical: 12.0),
-                        textStyle: const TextStyle(
+                        padding: EdgeInsets.symmetric(vertical: 12.0),
+                        textStyle: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       child: const Text(
@@ -92,27 +136,26 @@ class ReservationScreen extends StatelessWidget {
                       onPressed: () {
                         // 이용내역 버튼 클릭 시 이용 내역 페이지로 이동
                         Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => UsageHistoryPage(
-                                    usageHistory: [
-                                      {
-                                        "seatNumber": "25",
-                                        "room": "열람실",
-                                        "date": "2023-11-30",
-                                        "startTime": "09:00",
-                                        "endTime": "12:00"
-                                      },
-                                      {
-                                        "seatNumber": "12",
-                                        "room": "노트북실",
-                                        "date": "2023-12-01",
-                                        "startTime": "14:00",
-                                        "endTime": "16:00"
-                                      }
-                                    ],
-                                  )),
-                        );
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => UsageHistoryPage(
+                                      usageHistory: [
+                                        {
+                                          "seatNumber": "25",
+                                          "room": "열람실",
+                                          "date": "2023-11-30",
+                                          "startTime": "09:00",
+                                          "endTime": "12:00"
+                                        },
+                                        {
+                                          "seatNumber": "12",
+                                          "room": "노트북실",
+                                          "date": "2023-12-01",
+                                          "startTime": "14:00",
+                                          "endTime": "16:00"
+                                        }
+                                      ],
+                                    )));
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
@@ -230,6 +273,10 @@ class ReservationScreen extends StatelessWidget {
                 ],
               ),
             ),
+            Text(
+              _remainingTime, // 잔여 시간 표시
+              style: const TextStyle(fontSize: 16, color: Colors.redAccent),
+            ),
           ],
         ),
       ),
@@ -256,8 +303,8 @@ class ReservationScreen extends StatelessWidget {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               Text(
-                _calculateRemainingTime(), // 잔여 시간 계산
-                style: TextStyle(fontSize: 16, color: Colors.redAccent),
+                '1시간 30분 남았습니다.',
+                style: const TextStyle(fontSize: 16, color: Colors.redAccent),
               ),
             ],
           ),
@@ -291,7 +338,10 @@ class ReservationScreen extends StatelessWidget {
                     context: context,
                     builder: (BuildContext context) {
                       return AlertDialog(
-                        title: const Text('좌석 반납'),
+                        title: const Text(
+                          '좌석 반납',
+                          style: TextStyle(color: Colors.black),
+                        ),
                         content: const Text('정말 좌석을 반납하시겠습니까?'),
                         actions: [
                           TextButton(
@@ -334,7 +384,7 @@ class ReservationScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              Text('좌석 번호: $seatNumber',
+              Text('좌석 번호: ${widget.seatNumber}',
                   style: const TextStyle(color: Colors.blue)),
               const Text('자리 이동', style: TextStyle(color: Colors.blue)),
               const Text('좌석 반납', style: TextStyle(color: Colors.blue)),
@@ -346,7 +396,7 @@ class ReservationScreen extends StatelessWidget {
     );
   }
 
-  // 좌석 이용 중이 아닐 때 표시되는 메시지 위젯
+// 좌석 이용 중이 아닐 때 표시되는 메시지 위젯
   Widget _buildNoSeatMessage(BuildContext context) {
     return Container(
       constraints: const BoxConstraints(
@@ -358,37 +408,52 @@ class ReservationScreen extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Spacer(), // 위쪽 여백을 추가하여 중앙 정렬
           const Text(
             '현재 이용중인 자리가 없습니다.',
             style: TextStyle(fontSize: 18, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 40), // 메시지 아래 여백 추가
-          SizedBox(
-            width: double.infinity,
-            height: 35, // 버튼 높이 설정
-            child: ElevatedButton(
-              onPressed: () {
-                // QR 스캐너 페이지로 이동
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => QRScannerPage()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                padding: const EdgeInsets.symmetric(vertical: 12.0),
-                textStyle:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
-              ),
-              child: const Text(
-                '예약좌석 이용하기',
-                style: TextStyle(color: Colors.white),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () async {
+              final qrCode = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => QRScannerPage()),
+              );
+
+              if (qrCode != null) {
+                // QR 코드에서 좌석 번호 추출
+                int? seatNumber = int.tryParse(qrCode);
+                if (seatNumber != null) {
+                  // QR 코드 결과를 기반으로 ReservationScreen 업데이트
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ReservationScreen(seatNumber: seatNumber),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('잘못된 QR 코드입니다.')),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              padding:
+                  const EdgeInsets.symmetric(vertical: 12.0, horizontal: 20.0),
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
               ),
             ),
+            child: const Text(
+              '예약한 자리 이용하기',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
-          const SizedBox(height: 5), // 버튼 아래 여백 추가
         ],
       ),
     );
@@ -422,9 +487,9 @@ class ReservationScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               LinearProgressIndicator(
-                value: occupancyRate, // 좌석 점유율 표시
+                value: occupancyRate,
                 backgroundColor: Colors.grey[200],
-                color: Colors.green,
+                color: Colors.blue,
                 minHeight: 4,
               ),
               const SizedBox(height: 8),
@@ -438,80 +503,5 @@ class ReservationScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  // 잔여 시간을 계산하는 메서드
-  String _calculateRemainingTime() {
-    DateTime endTime = DateTime.parse("2023-12-06 20:00"); // 퇴실 시간 (예시)
-    Duration remainingTime = endTime.difference(DateTime.now());
-
-    if (remainingTime.isNegative) {
-      return '퇴실 시간이 지났습니다.'; // 퇴실 시간이 지났을 경우 메시지
-    }
-
-    int hours = remainingTime.inHours; // 남은 시간의 시간
-    int minutes = remainingTime.inMinutes % 60; // 남은 시간의 분
-
-    return '잔여 시간 $hours시간 $minutes분'; // 잔여 시간 표시
-  }
-}
-
-// QR 스캐너 페이지
-class QRScannerPage extends StatefulWidget {
-  @override
-  _QRScannerPageState createState() => _QRScannerPageState();
-}
-
-class _QRScannerPageState extends State<QRScannerPage> {
-  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-  Barcode? result;
-  QRViewController? controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('QR 코드 스캔')),
-      body: Column(
-        children: [
-          Expanded(
-            flex: 5,
-            child: QRView(
-              key: qrKey,
-              onQRViewCreated: _onQRViewCreated,
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: Center(
-              child: (result != null)
-                  ? Text(
-                      '스캔 결과: ${result!.code}',
-                      style: const TextStyle(fontSize: 18),
-                    )
-                  : const Text('QR 코드를 스캔하세요'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _onQRViewCreated(QRViewController controller) {
-    this.controller = controller;
-    controller.scannedDataStream.listen((scanData) {
-      setState(() {
-        result = scanData;
-      });
-      // 스캔 완료 후 처리: 좌석 번호 업데이트 및 화면 이동
-      if (result != null) {
-        Navigator.pop(context, result!.code); // 스캔 결과 반환
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    controller?.dispose();
-    super.dispose();
   }
 }
