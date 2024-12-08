@@ -295,13 +295,11 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12), // 여백 설정
           SizedBox(
-            // 고정 높이의 위젯
-            height: 160, // 높이 설정
+            height: 170,
             child: ListView.builder(
-              // 리스트 뷰 빌더
-              scrollDirection: Axis.horizontal, // 수평 스크롤
-              itemCount: 5, // 아이템 수
-              itemBuilder: (context, index) => _buildBookItem(), // 도서 아이템 빌드
+              scrollDirection: Axis.horizontal,
+              itemCount: 5,
+              itemBuilder: (context, index) => _buildBookItem(),
             ),
           ),
         ],
@@ -310,32 +308,29 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildBookItem() {
-    // 도서 아이템 빌드 메서드
     return Container(
-      // 컨테이너 위젯
-      width: 100, // 너비 설정
-      margin: const EdgeInsets.only(right: 16), // 오른쪽 여백 설정
-      child: Column(
-        // 세로 방향으로 자식 위젯 배치
-        children: [
-          Container(
-            // 도서 이미지 컨테이너
-            height: 140, // 높이 설정
-            decoration: BoxDecoration(
-              // 배경 스타일 설정
-              color: Colors.grey[300], // 배경 색상 설정
-              borderRadius: BorderRadius.circular(8), // 둥근 모서리 설정
+      width: 100,
+      margin: const EdgeInsets.only(right: 16),
+      child: SizedBox(
+        height: 170,
+        child: Column(
+          children: [
+            Container(
+              height: 140,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-          ),
-          const SizedBox(height: 8), // 여백 설정
-          const Text(
-            // 텍스트 위젯
-            '도서명', // 도서명
-            style: TextStyle(fontSize: 12), // 스타일 설정
-            maxLines: 1, // 최대 줄 수
-            overflow: TextOverflow.ellipsis, // 오버플로우 처리
-          ),
-        ],
+            const SizedBox(height: 8),
+            const Text(
+              '도서명',
+              style: TextStyle(fontSize: 12),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
