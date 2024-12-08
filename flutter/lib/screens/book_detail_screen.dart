@@ -1,21 +1,31 @@
 // 이 파일은 도서 상세 정보를 표시하는 Flutter 위젯을 정의합니다.
+// Start of Selection
 import 'package:flutter/material.dart'; // Flutter의 Material 디자인 패키지 임포트
 import '../models/book.dart'; // 도서 모델 임포트
 import 'book_loan_info_screen.dart'; // 도서 대출 정보 스크린 임포트
-import '../models/book_loan_info.dart';  // BookLoanInfo 모델
-import '../services/book_loan_service.dart';  // BookLoanService
+import 'package:android_intent_plus/android_intent.dart'; // Android 인텐트 패키지 임포트
+import 'package:flutter/services.dart'; // Flutter 서비스 패키지 임포트
+import 'dart:io' show Platform; // 플랫폼 확인을 위한 dart:io 임포트
 
-class BookDetailScreen extends StatefulWidget {
+class BookDetailScreen extends StatelessWidget {
   final Book book;
 
   const BookDetailScreen({super.key, required this.book});
 
-  @override
-  State<BookDetailScreen> createState() => _BookDetailScreenState();
-}
-
-class _BookDetailScreenState extends State<BookDetailScreen> {
-  final BookLoanService _loanService = BookLoanService();
+  Future<void> _launchApp() async {
+    if (Platform.isAndroid) {
+      try {
+        final intent = AndroidIntent(
+            action: 'android.intent.action.MAIN',
+            package: 'com.DefaultCompany.Myproject3',
+            componentName: 'com.unity3d.player.UnityPlayerActivity',
+            category: 'android.intent.category.LAUNCHER');
+        await intent.launch();
+      } catch (e) {
+        print('앱 실행 중 오류 발생: $e');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,9 +53,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: widget.book.imageUrl.isNotEmpty
+                child: book.imageUrl.isNotEmpty
                     ? Image.network(
-                        widget.book.imageUrl,
+                        book.imageUrl,
                         fit: BoxFit.cover,
                         loadingBuilder: (context, child, loadingProgress) {
                           if (loadingProgress == null) return child;
@@ -68,14 +78,14 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
               const SizedBox(height: 16),
               // 책 기본 정보
               Text(
-                widget.book.title,
+                book.title,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
               ),
               const SizedBox(height: 8),
               Text(
-                widget.book.author,
+                book.author,
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
               const SizedBox(height: 8),
@@ -84,7 +94,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    widget.book.publisher,
+                    book.publisher,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   Row(
@@ -92,7 +102,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                       const Icon(Icons.star, color: Colors.amber, size: 24),
                       const SizedBox(width: 4),
                       Text(
-                        widget.book.rating.toString(),
+                        book.rating.toString(),
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -107,42 +117,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton.icon(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) => Dialog(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              AppBar(
-                                title: const Text('도서 위치'),
-                                leading: IconButton(
-                                  icon: const Icon(Icons.close),
-                                  onPressed: () => Navigator.pop(context),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: AspectRatio(
-                                  aspectRatio: 1,
-                                  child: InteractiveViewer(
-                                    maxScale: 4.0,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        border: Border.all(color: Colors.grey),
-                                      ),
-                                      child: CustomPaint(
-                                        painter: FloorPlanPainter(),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+                    onPressed: _launchApp,
                     icon: const Icon(Icons.map, size: 18),
                     label: const Text('책 길찾기'),
                     style: ElevatedButton.styleFrom(
@@ -159,7 +134,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => BookLoanInfoScreen(book: widget.book),
+                          builder: (context) => BookLoanInfoScreen(book: book),
                         ),
                       );
                     },
@@ -177,19 +152,26 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                 ],
               ),
               const SizedBox(height: 24),
-              // 소장정보
-              _buildInfoSection('소장정보'),
-              _buildStatusCard(),
-              const SizedBox(height: 16),
-              // 책 정보
+              // 소 정보
               _buildInfoSection('책 정보'),
               _buildMDCard(),
+              // 소장정보를 Visibility 위젯으로 감싸서 비활성화
+              Visibility(
+                visible: false,
+                child: Column(
+                  children: [
+                    _buildInfoSection('소장정보'),
+                    _buildStatusCard(),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
       );
     } catch (e) {
-      print('도서 상세 화면 빌드 중 에러: $e'); // 디버그 로그 추가
+      print('도서 상세 화면 빌드 중 에러: $e');
       return Scaffold(
         appBar: AppBar(
           title: const Text('오류'),
@@ -215,35 +197,17 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
   }
 
   Widget _buildStatusCard() {
-    return FutureBuilder<List<BookLoanInfo>>(
-      future: _loanService.fetchBookLoanInfo(widget.book.id.toString()),  // widget. 추가
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(
-            child: Text('오류가 발생했습니다: ${snapshot.error}'),
-          );
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('소장 정보가 없습니다.'));
-        }
-
-        // 첫 번째 대출 정보를 사용
-        final loanInfo = snapshot.data!.first;
-
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                _buildStatusRow('도서상태', loanInfo.status),
-                _buildStatusRow('청구기호', loanInfo.callNo),
-                _buildStatusRow('등록번호', loanInfo.registrationNo),
-              ],
-            ),
-          ),
-        );
-      },
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            _buildStatusRow('도서상태', '대출가능'),
+            _buildStatusRow('청구기호', '813.7 한32ㅅ'),
+            _buildStatusRow('등록번호', '111111'),
+          ],
+        ),
+      ),
     );
   }
 
@@ -298,43 +262,4 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
       ),
     );
   }
-}
-
-// FloorPlanPainter 클래스 추가
-class FloorPlanPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.black
-      ..strokeWidth = 1.0
-      ..style = PaintingStyle.stroke;
-
-    // 도서관 평면도 그리기
-    void drawRoom(Offset position, Size roomSize) {
-      final rect = Rect.fromLTWH(
-        position.dx * size.width,
-        position.dy * size.height,
-        roomSize.width * size.width,
-        roomSize.height * size.height,
-      );
-      canvas.drawRect(rect, paint);
-    }
-
-    // 각 구역 그리기
-    // 왼쪽 상단 구역
-    drawRoom(const Offset(0.1, 0.1), const Size(0.2, 0.2));
-    // 중앙 상단 구역
-    drawRoom(const Offset(0.4, 0.1), const Size(0.2, 0.2));
-    // 오른쪽 상단 구역
-    drawRoom(const Offset(0.7, 0.1), const Size(0.2, 0.2));
-    // 중앙 구역
-    drawRoom(const Offset(0.3, 0.4), const Size(0.4, 0.2));
-    // 왼쪽 하단 구역
-    drawRoom(const Offset(0.1, 0.7), const Size(0.2, 0.2));
-    // 오른쪽 하단 구역
-    drawRoom(const Offset(0.7, 0.7), const Size(0.2, 0.2));
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
