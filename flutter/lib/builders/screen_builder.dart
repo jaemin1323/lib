@@ -19,9 +19,7 @@ class ScreenBuilder {
       index: selectedIndex,
       children: [
         const LibraryMenuScreen(),
-        ReservationScreen(
-          seatNumber: 8,
-        ), //현재 이용중인 좌석번호
+        ReservationScreen(seatNumber: 8),
         const HomeScreen(),
         const SearchScreen(),
         _buildAuthScreen(
