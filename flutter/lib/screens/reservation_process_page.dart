@@ -9,7 +9,7 @@ class ReservationProcessPage extends StatefulWidget {
 }
 
 class _ReservationProcessPageState extends State<ReservationProcessPage> {
-  DateTime _focusedDay = DateTime.now(); // 현재 집중된 날짜
+  DateTime _focusedDay = DateTime.now(); // 오늘 날짜
   DateTime? _selectedDate; // 선택된 날짜
   String? _selectedStartTime; // 선택된 시작 시간
   String? _selectedEndTime; // 선택된 종료 시간
@@ -100,16 +100,16 @@ class _ReservationProcessPageState extends State<ReservationProcessPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('예약 진행'), // 앱바 제목
+        title: const Text('예약 진행'),
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
             TableCalendar(
-              locale: 'ko_KR', // 한국어 로케일
+              locale: 'ko_KR',
               firstDay: DateTime.now(), // 캘린더 시작일
               lastDay: DateTime.now().add(const Duration(days: 14)), // 캘린더 종료일
-              focusedDay: _focusedDay, // 현재 집중된 날짜
+              focusedDay: _focusedDay, // 오늘 날짜
               selectedDayPredicate: (day) =>
                   isSameDay(day, _selectedDate), // 선택된 날짜 확인
               onDaySelected: (selectedDay, focusedDay) {
@@ -143,7 +143,9 @@ class _ReservationProcessPageState extends State<ReservationProcessPage> {
                       items: _roomOptions
                           .map((room) => DropdownMenuItem(
                                 value: room,
-                                child: Center(child: Text(room)),
+                                child: Center(
+                                    child: Text(room,
+                                        style: TextStyle(color: Colors.black))),
                               ))
                           .toList(),
                       onChanged: (newRoom) {
@@ -151,7 +153,7 @@ class _ReservationProcessPageState extends State<ReservationProcessPage> {
                           _selectedRoom = newRoom!;
                         });
                       },
-                      style: const TextStyle(fontSize: 16),
+                      style: const TextStyle(fontSize: 16, color: Colors.black),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -159,11 +161,15 @@ class _ReservationProcessPageState extends State<ReservationProcessPage> {
                     child: DropdownButton<String>(
                       isExpanded: true,
                       value: _selectedStartTime,
-                      hint: const Center(child: Text("입실시간 선택")),
+                      hint: const Center(
+                          child: Text("입실시간",
+                              style: TextStyle(color: Colors.black))),
                       items: _generateStartOptions()
                           .map((time) => DropdownMenuItem(
                                 value: time,
-                                child: Center(child: Text(time)),
+                                child: Center(
+                                    child: Text(time,
+                                        style: TextStyle(color: Colors.black))),
                               ))
                           .toList(),
                       onChanged: (newStartTime) {
@@ -172,7 +178,7 @@ class _ReservationProcessPageState extends State<ReservationProcessPage> {
                           _selectedEndTime = null;
                         });
                       },
-                      style: const TextStyle(fontSize: 16),
+                      style: const TextStyle(fontSize: 16, color: Colors.black),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -180,11 +186,15 @@ class _ReservationProcessPageState extends State<ReservationProcessPage> {
                     child: DropdownButton<String>(
                       isExpanded: true,
                       value: _selectedEndTime,
-                      hint: const Center(child: Text("퇴실시간 선택")),
+                      hint: const Center(
+                          child: Text("퇴실시간",
+                              style: TextStyle(color: Colors.black))),
                       items: _generateEndOptions()
                           .map((time) => DropdownMenuItem(
                                 value: time,
-                                child: Center(child: Text(time)),
+                                child: Center(
+                                    child: Text(time,
+                                        style: TextStyle(color: Colors.black))),
                               ))
                           .toList(),
                       onChanged: (newEndTime) {
@@ -192,7 +202,7 @@ class _ReservationProcessPageState extends State<ReservationProcessPage> {
                           _selectedEndTime = newEndTime;
                         });
                       },
-                      style: const TextStyle(fontSize: 16),
+                      style: const TextStyle(fontSize: 16, color: Colors.black),
                     ),
                   ),
                 ],
@@ -220,11 +230,11 @@ class _ReservationProcessPageState extends State<ReservationProcessPage> {
 
 // 장소별 좌석 구성
 final Map<String, List<String>> roomSeats = {
-  "열람실": List.generate(203, (index) => "${index + 1}번 좌석"),
-  "노트북실": List.generate(96, (index) => "${index + 1}번 좌석"),
-  "자율학습실": List.generate(80, (index) => "${index + 1}번 좌석"),
-  "전자정보실": List.generate(70, (index) => "${index + 1}번 좌석"),
-  "스터디룸": List.generate(27, (index) => "${index + 1}번 스터디룸"),
+  "열람실": List.generate(203, (index) => "${index + 1}번"),
+  "노트북실": List.generate(96, (index) => "${index + 1}번"),
+  "자율학습실": List.generate(80, (index) => "${index + 1}번"),
+  "전자정보실": List.generate(70, (index) => "${index + 1}번"),
+  "스터디룸": List.generate(27, (index) => "${index + 1}번"),
 };
 
 class SeatSelectionPage extends StatefulWidget {
@@ -301,7 +311,10 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("예약 확인"),
+        title: const Text(
+          "예약 확인",
+          style: TextStyle(color: Colors.black),
+        ),
         content: Text(reservationDetails),
         actions: [
           TextButton(
